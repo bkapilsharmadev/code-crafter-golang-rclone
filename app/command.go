@@ -145,5 +145,5 @@ func EchoCommand(c net.Conn, args []string) string {
 	if len(args) != 1 {
 		return "-ERR wong number of arguments for 'ECHO' command"
 	}
-	return fmt.Sprintf("%s\r\n", args[0])
+	return fmt.Sprintf("+%s\r\n", args[0])
 }
