@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -33,20 +34,32 @@ func main() {
 
 func handleConn(conn net.Conn) {
 	defer conn.Close()
+	reader := bufio.NewReader(conn)
 
 	for {
-		buf := make([]byte, 1024)
+		//buf := make([]byte, 1024)
+		inputs, err := parseCommand(reader)
 
-		_, err := conn.Read(buf)
-		if errors.Is(err, io.EOF) {
-			fmt.Println("client closed the connections ", conn.RemoteAddr())
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				fmt.Println("client closed the connections ", conn.RemoteAddr())
+				break
+			} else if err != nil {
+				fmt.Println("Error while reading the message")
+				conn.Write([]byte("-ERR invalid command \r\n"))
+			}
 			break
-		} else if err != nil {
-			fmt.Println("Error while reading the message")
 		}
-		conn.Write([]byte("+PONG\r\n"))
-		//break
 
+		//conn.Write([]byte("+PONG\r\n"))
+		fmt.Println("parsed command which is recevied from client -< ", inputs)
+		response := executeCommand(conn, inputs)
+		// return the response
+		_, err = conn.Write([]byte(response))
+		if err != nil {
+			fmt.Println("Error sending response to client ", err)
+			break
+		}
 	}
 
 }
