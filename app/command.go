@@ -166,7 +166,7 @@ func SetCommand(c net.Conn, args []string) string {
 		ExpiresAt: time.Time{},
 	}
 
-	if len(args) == 4 && strings.ToUpper(args[3]) == "PX" {
+	if len(args) == 4 && strings.ToUpper(args[2]) == "PX" {
 		expiration, err := strconv.Atoi(args[3])
 		if err != nil {
 			return "-ERR invalid exipration time provided \r\n"
