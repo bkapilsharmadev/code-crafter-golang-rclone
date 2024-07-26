@@ -34,13 +34,13 @@ func handleConn(conn net.Conn) {
 	defer conn.Close()
 	commandReader := bufio.NewReader(conn)
 	for {
-		inputs, err := commandReader.ReadString('\n')
-		if err != nil {
-			fmt.Println("Error parsing command")
-			conn.Write([]byte("-ERR invalid commands\r\n"))
-		}
-		fmt.Println("inputs -> ", inputs)
-		conn.Write([]byte("+PONG\r\n"))
+		// inputs, err := commandReader.ReadString('\n')
+		// if err != nil {
+		// 	fmt.Println("Error parsing command")
+		// 	conn.Write([]byte("-ERR invalid commands\r\n"))
+		// }
+		fmt.Println("inputs -> ", commandReader)
+		//conn.Write([]byte("+PONG\r\n"))
 	}
 
 }
