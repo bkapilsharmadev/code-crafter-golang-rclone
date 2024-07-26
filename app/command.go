@@ -175,7 +175,7 @@ func SetCommand(c net.Conn, args []string) string {
 
 	}
 	SetStore[key] = record
-	return fmt.Sprint("+OK\r\n")
+	return fmt.Sprintf("+OK\r\n")
 }
 
 func GetCommand(c net.Conn, args []string) string {
@@ -191,6 +191,7 @@ func GetCommand(c net.Conn, args []string) string {
 
 	if time.Now().After(val.ExpiresAt) && !val.ExpiresAt.IsZero() {
 		delete(SetStore, key)
+		return "$-1\r\n"
 	}
 	return fmt.Sprintf("$%d\r\n%s\r\n", len(val.Value.(string)), val.Value)
 }

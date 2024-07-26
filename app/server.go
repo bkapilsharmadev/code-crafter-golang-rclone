@@ -22,7 +22,7 @@ func main() {
 		c, err := l.Accept()
 		if err != nil {
 			fmt.Println("Error accpeting new connections ", err.Error())
-			os.Exit(1)
+			break
 		}
 
 		go handleConn(c)
@@ -43,7 +43,7 @@ func handleConn(conn net.Conn) {
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				fmt.Println("client closed the connections ", conn.RemoteAddr())
-				break
+
 			} else if err != nil {
 				fmt.Println("Error while reading the message")
 				conn.Write([]byte("-ERR invalid command \r\n"))
