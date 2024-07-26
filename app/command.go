@@ -154,9 +154,8 @@ func EchoCommand(c net.Conn, args []string) string {
 
 func SetCommand(c net.Conn, args []string) string {
 	if len(args) < 2 {
-		return "-ERR wrong number of arguments for 'SET' command\r\n"
+		return "-ERR wrong number of arguments for 'SET' commands\r\n"
 	}
-
 	key := args[0]
 	val := args[1]
 
@@ -166,17 +165,17 @@ func SetCommand(c net.Conn, args []string) string {
 		ExpiresAt: time.Time{},
 	}
 
+	// check if px arg provided
 	if len(args) == 4 && strings.ToUpper(args[2]) == "PX" {
 		expiration, err := strconv.Atoi(args[3])
 		if err != nil {
-			return "-ERR invalid exipration time provided \r\n"
+			return "-ERR invalid expiration time provided for 'SET' command\r\n"
 		}
 		record.ExpiresAt = time.Now().Add(time.Duration(expiration) * time.Millisecond)
+
 	}
-
 	SetStore[key] = record
-	return fmt.Sprintf("+OK\r\n")
-
+	return fmt.Sprint("+OK\r\n")
 }
 
 func GetCommand(c net.Conn, args []string) string {
