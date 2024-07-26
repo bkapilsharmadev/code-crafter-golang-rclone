@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
@@ -31,6 +32,15 @@ func main() {
 
 func handleConn(conn net.Conn) {
 	defer conn.Close()
-	conn.Write([]byte("+PONG\r\n"))
+	commandReader := bufio.NewReader(conn)
+	for {
+		inputs, err := commandReader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Error parsing command")
+			conn.Write([]byte("-ERR invalid commands\r\n"))
+		}
+		fmt.Println("inputs -> ", inputs)
+		conn.Write([]byte("+PONG\r\n"))
+	}
 
 }
