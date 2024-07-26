@@ -93,7 +93,7 @@ func parseArray(reader *bufio.Reader, line string) ([]string, error) {
 				return nil, err
 			}
 
-			args[1] = string(arg)
+			args[i] = string(arg)
 		default:
 			return nil, errors.New("invalid bulk string format")
 		}
