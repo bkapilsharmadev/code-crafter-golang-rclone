@@ -16,10 +16,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, err = l.Accept()
+	c, err := l.Accept()
 	if err != nil {
 		fmt.Println("Error accpeting new connections ", err.Error())
 		os.Exit(1)
 	}
+
+	// *1\r\n$4\r\nPING\r\n
+	c.Write([]byte("+PONG\r\n"))
 
 }
