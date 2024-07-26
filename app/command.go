@@ -24,6 +24,7 @@ var CommandMap = map[string]CommandFunc{
 	"ECHO": EchoCommand,
 	"SET":  SetCommand,
 	"GET":  GetCommand,
+	"INFO": InfoCommand,
 }
 
 var SetStore = map[string]*Record{}
@@ -194,4 +195,26 @@ func GetCommand(c net.Conn, args []string) string {
 		return "$-1\r\n"
 	}
 	return fmt.Sprintf("$%d\r\n%s\r\n", len(val.Value.(string)), val.Value)
+}
+
+func InfoCommand(c net.Conn, args []string) string {
+	if len(args) == 1 && strings.ToUpper(args[0]) == "REPLICATION" {
+		fmt.Println("Info comamnds -< ", args)
+
+		respone := `# Replication
+			role:master
+			connected_slaves:0
+			master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb
+			master_repl_offset:0
+			second_repl_offset:-1
+			repl_backlog_active:0
+			repl_backlog_size:1048576
+			repl_backlog_first_byte_offset:0
+			repl_backlog_histlen:`
+
+		return fmt.Sprintf("$%d\r\n%s\r\n", len(respone), respone)
+	} else {
+		return fmt.Sprintf("$-1\r\n")
+	}
+
 }
