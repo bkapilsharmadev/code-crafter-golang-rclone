@@ -24,7 +24,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		handleConn(c)
+		go handleConn(c)
 	}
 
 	// *1\r\n$4\r\nPING\r\n
