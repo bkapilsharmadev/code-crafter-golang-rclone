@@ -22,7 +22,11 @@ type Record struct {
 var CommandMap = map[string]CommandFunc{
 	"PING": PingCommand,
 	"ECHO": EchoCommand,
+	"SET":  SetCommand,
+	"GET":  GetCommand,
 }
+
+var SetStore = map[string]*Record{}
 
 // *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n -> ["ECHO", "hey"]
 func parseCommand(reader *bufio.Reader) ([]string, error) {
@@ -136,14 +140,46 @@ func executeCommand(c net.Conn, args []string) string {
 
 func PingCommand(c net.Conn, args []string) string {
 	if len(args) > 0 {
-		return "-ERR wrong number of argument for 'PING' command"
+		return "-ERR wrong number of argument for 'PING' command\r\n"
 	}
 	return fmt.Sprintf("+PONG\r\n")
 }
 
 func EchoCommand(c net.Conn, args []string) string {
 	if len(args) != 1 {
-		return "-ERR wong number of arguments for 'ECHO' command"
+		return "-ERR wong number of arguments for 'ECHO' command\r\n"
 	}
 	return fmt.Sprintf("+%s\r\n", args[0])
+}
+
+func SetCommand(c net.Conn, args []string) string {
+	if len(args) < 2 {
+		return "-ERR wrong number of arguments for 'SET' command\r\n"
+	}
+
+	key := args[0]
+	val := args[1]
+
+	record := &Record{
+		Value:     val,
+		CreatedAt: time.Now(),
+		ExpiresAt: time.Time{},
+	}
+
+	SetStore[key] = record
+	return fmt.Sprintf("+OK\r\n")
+
+}
+
+func GetCommand(c net.Conn, args []string) string {
+	if len(args) != 1 {
+		return "-ERR wrong number of arguments for 'GET' command\r\n"
+	}
+	key := strings.TrimSpace(args[0])
+	val, prsnt := SetStore[key]
+	if !prsnt {
+		return "$-1\r\n"
+	}
+
+	return fmt.Sprintf("$%d\r\n%s\r\n", len(val.Value.(string)), val.Value)
 }
