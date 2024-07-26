@@ -183,14 +183,16 @@ func GetCommand(c net.Conn, args []string) string {
 	if len(args) != 1 {
 		return "-ERR wrong number of arguments for 'GET' command\r\n"
 	}
-	key := args[0]
+	key := strings.TrimSpace(args[0])
 	val, prsnt := SetStore[key]
+
 	if !prsnt {
 		return "$-1\r\n"
 	}
 
 	if time.Now().After(val.ExpiresAt) && !val.ExpiresAt.IsZero() {
 		delete(SetStore, key)
+		return "$-1\r\n"
 	}
 
 	return fmt.Sprintf("$%d\r\n%s\r\n", len(val.Value.(string)), val.Value)
