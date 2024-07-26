@@ -11,8 +11,12 @@ import (
 )
 
 var (
-	port = flag.String("port", "6379", "port number to connect on")
-	addr = flag.String("addr", "0.0.0.0", "address of server")
+	port        = flag.String("port", "6379", "port number to connect on")
+	addr        = flag.String("addr", "0.0.0.0", "address of server")
+	master_host = flag.String("master_host", "0.0.0.0", "master host ip addr")
+	master_port = flag.String("master_port", "6379", "master port of server")
+	role        = "master"
+	replicaof   = flag.String("replicaof", "master", "role type of server, if host it will be master else slave")
 )
 
 func main() {
