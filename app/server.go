@@ -3,19 +3,26 @@ package main
 import (
 	"bufio"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"net"
 	"os"
 )
 
+var (
+	port = flag.String("port", "6379", "port number to connect on")
+	addr = flag.String("addr", "0.0.0.0", "address of server")
+)
+
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
+	flag.Parse()
 
-	l, err := net.Listen("tcp", "0.0.0.0:6379")
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%s", *addr, *port))
 	if err != nil {
-		fmt.Println("Failed to binf port 6379")
+		fmt.Sprintf("Failed to binf port %s \n", *port)
 		os.Exit(1)
 	}
 	for {
