@@ -166,6 +166,14 @@ func SetCommand(c net.Conn, args []string) string {
 		ExpiresAt: time.Time{},
 	}
 
+	if len(args) == 4 && strings.ToUpper(args[3]) == "PX" {
+		expiration, err := strconv.Atoi(args[3])
+		if err != nil {
+			return "-ERR invalid exipration time provided \r\n"
+		}
+		record.ExpiresAt = time.Now().Add(time.Duration(expiration) * time.Millisecond)
+	}
+
 	SetStore[key] = record
 	return fmt.Sprintf("+OK\r\n")
 
@@ -179,6 +187,10 @@ func GetCommand(c net.Conn, args []string) string {
 	val, prsnt := SetStore[key]
 	if !prsnt {
 		return "$-1\r\n"
+	}
+
+	if time.Now().After(val.ExpiresAt) && !val.ExpiresAt.IsZero() {
+		delete(SetStore, key)
 	}
 
 	return fmt.Sprintf("$%d\r\n%s\r\n", len(val.Value.(string)), val.Value)
