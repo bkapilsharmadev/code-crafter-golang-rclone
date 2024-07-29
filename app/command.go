@@ -198,23 +198,24 @@ func GetCommand(s *Server, c net.Conn, args []string) string {
 }
 
 func InfoCommand(s *Server, c net.Conn, args []string) string {
-	if len(args) == 1 && strings.ToUpper(args[0]) == "REPLICATION" {
-		fmt.Println("Info comamnds -< ", args)
-
-		respone := fmt.Sprintf(`# Replication
-			role: %s
-			connected_slaves: %d
-			master_replid: %s
-			master_repl_offset: %d
-			second_repl_offset: -1
-			repl_backlog_active: %d
-			repl_backlog_size: %d
-			repl_backlog_first_byte_offset: %d
-			repl_backlog_histlen: %d`, s.Role, s.ConnectedSlaves, s.MasterReplid, s.MasterReplOffset, s.ReplBacklogActive, s.ReplBacklogSize, s.ReplBacklogFirstByteOffset, s.ReplBacklogHistlen)
-
-		return fmt.Sprintf("$%d\r\n%s\r\n", len(respone), respone)
-	} else {
-		return fmt.Sprintf("$-1\r\n")
+	if len(args) != 1 || strings.ToLower(args[0]) != "replication" {
+		return "-ERR wrong number of arguments or invalid subcommand for 'INFO' command\r\n"
 	}
 
+	// Get replication information from the server struct
+	s.mutex.RLock()
+	replicationInfo := fmt.Sprintf(`# Replication
+	role:%s
+	connected_slaves:%d
+	master_replid:%s
+	master_repl_offset:%d
+	second_repl_offset:-1
+	repl_backlog_active:%d
+	repl_backlog_size:%d
+	repl_backlog_first_byte_offset:%d
+	repl_backlog_histlen:%d
+	`, s.Role, s.ConnectedSlaves, s.MasterReplid, s.MasterReplOffset, s.ReplBacklogActive, s.ReplBacklogSize, s.ReplBacklogFirstByteOffset, s.ReplBacklogHistlen)
+	s.mutex.RUnlock()
+
+	return fmt.Sprintf("$%d\r\n%s\r\n", len(replicationInfo), replicationInfo)
 }
