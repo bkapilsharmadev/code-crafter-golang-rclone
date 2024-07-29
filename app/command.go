@@ -27,7 +27,7 @@ var CommandMap = map[string]CommandFunc{
 	"INFO": InfoCommand,
 }
 
-var SetStore = map[string]*Record{}
+//var SetStore = map[string]*Record{}
 
 // *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n -> ["ECHO", "hey"]
 func parseCommand(reader *bufio.Reader) ([]string, error) {
@@ -175,7 +175,7 @@ func SetCommand(s *Server, c net.Conn, args []string) string {
 		record.ExpiresAt = time.Now().Add(time.Duration(expiration) * time.Millisecond)
 
 	}
-	SetStore[key] = record
+	s.DataStore[key] = record
 	return fmt.Sprintf("+OK\r\n")
 }
 
@@ -185,13 +185,13 @@ func GetCommand(s *Server, c net.Conn, args []string) string {
 	}
 
 	key := args[0]
-	val, prst := SetStore[key]
+	val, prst := s.DataStore[key]
 	if !prst {
 		return "$-1\r\n"
 	}
 
 	if time.Now().After(val.ExpiresAt) && !val.ExpiresAt.IsZero() {
-		delete(SetStore, key)
+		delete(s.DataStore, key)
 		return "$-1\r\n"
 	}
 	return fmt.Sprintf("$%d\r\n%s\r\n", len(val.Value.(string)), val.Value)
