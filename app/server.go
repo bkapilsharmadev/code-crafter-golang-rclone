@@ -115,21 +115,6 @@ func main() {
 	fmt.Println("Logs from your program will appear here!")
 	flag.Parse()
 
-	// l, err := net.Listen("tcp", fmt.Sprintf("%s:%s", *addr, *port))
-	// if err != nil {
-	// 	fmt.Sprintf("Failed to binf port %s \n", *port)
-	// 	os.Exit(1)
-	// }
-	// for {
-	// 	c, err := l.Accept()
-	// 	if err != nil {
-	// 		fmt.Println("Error accpeting new connections ", err.Error())
-	// 		break
-	// 	}
-
-	// 	go handleConn(c)
-	// }
-
 	// *1\r\n$4\r\nPING\r\n
 	//c.Write([]byte("+PONG\r\n"))
 	server := NewServer()
