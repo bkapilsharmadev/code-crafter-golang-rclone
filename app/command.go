@@ -11,13 +11,13 @@ import (
 	"time"
 )
 
-type CommandFunc func(c net.Conn, args []string) string
+type CommandFunc func(s *Server, c net.Conn, args []string) string
 
-type Record struct {
-	Value     any
-	CreatedAt time.Time
-	ExpiresAt time.Time
-}
+// type Record struct {
+// 	Value     any
+// 	CreatedAt time.Time
+// 	ExpiresAt time.Time
+// }
 
 var CommandMap = map[string]CommandFunc{
 	"PING": PingCommand,
@@ -107,7 +107,7 @@ func parseArray(reader *bufio.Reader, line string) ([]string, error) {
 	return args, nil
 }
 
-func executeCommand(c net.Conn, args []string) string {
+func executeCommand(s *Server, c net.Conn, args []string) string {
 	if len(args) == 0 {
 		return "-ERR no command provided"
 	}
@@ -133,27 +133,27 @@ func executeCommand(c net.Conn, args []string) string {
 	default:
 		commands := strings.ToUpper(args[0])
 		if commandFunc, exists := CommandMap[commands]; exists {
-			return commandFunc(c, args[1:])
+			return commandFunc(s, c, args[1:])
 		}
 		return "-ERR Unknown Command"
 	}
 }
 
-func PingCommand(c net.Conn, args []string) string {
+func PingCommand(s *Server, c net.Conn, args []string) string {
 	if len(args) > 0 {
 		return "-ERR wrong number of argument for 'PING' command\r\n"
 	}
 	return fmt.Sprintf("+PONG\r\n")
 }
 
-func EchoCommand(c net.Conn, args []string) string {
+func EchoCommand(s *Server, c net.Conn, args []string) string {
 	if len(args) != 1 {
 		return "-ERR wong number of arguments for 'ECHO' command\r\n"
 	}
 	return fmt.Sprintf("+%s\r\n", args[0])
 }
 
-func SetCommand(c net.Conn, args []string) string {
+func SetCommand(s *Server, c net.Conn, args []string) string {
 	if len(args) < 2 {
 		return "-ERR wrong number of arguments for 'SET' commands\r\n"
 	}
@@ -179,7 +179,7 @@ func SetCommand(c net.Conn, args []string) string {
 	return fmt.Sprintf("+OK\r\n")
 }
 
-func GetCommand(c net.Conn, args []string) string {
+func GetCommand(s *Server, c net.Conn, args []string) string {
 	if len(args) != 1 {
 		return "-ERR wrong number of arguments for 'GET' commands"
 	}
@@ -197,20 +197,20 @@ func GetCommand(c net.Conn, args []string) string {
 	return fmt.Sprintf("$%d\r\n%s\r\n", len(val.Value.(string)), val.Value)
 }
 
-func InfoCommand(c net.Conn, args []string) string {
+func InfoCommand(s *Server, c net.Conn, args []string) string {
 	if len(args) == 1 && strings.ToUpper(args[0]) == "REPLICATION" {
 		fmt.Println("Info comamnds -< ", args)
 
-		respone := `# Replication
-			role:` + *replicaof + `
-			connected_slaves:0
-			master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb
-			master_repl_offset:0
-			second_repl_offset:-1
-			repl_backlog_active:0
-			repl_backlog_size:1048576
-			repl_backlog_first_byte_offset:0
-			repl_backlog_histlen:`
+		respone := fmt.Sprintf(`# Replication
+			role: %s
+			connected_slaves: %d
+			master_replid: %s
+			master_repl_offset: %d
+			second_repl_offset: -1
+			repl_backlog_active: %d
+			repl_backlog_size: %d
+			repl_backlog_first_byte_offset: %d
+			repl_backlog_histlen: %d`, s.Role, s.ConnectedSlaves, s.MasterReplid, s.MasterReplOffset, s.ReplBacklogActive, s.ReplBacklogSize, s.ReplBacklogFirstByteOffset, s.ReplBacklogHistlen)
 
 		return fmt.Sprintf("$%d\r\n%s\r\n", len(respone), respone)
 	} else {
