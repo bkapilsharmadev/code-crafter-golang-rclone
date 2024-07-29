@@ -47,7 +47,7 @@ var (
 	master_host = flag.String("master_host", "0.0.0.0", "master host ip addr")
 	master_port = flag.String("master_port", "6379", "master port of server")
 	role        = "master"
-	replicaof   = flag.String("replicaof", "master", "role type of server, if host it will be master else slave")
+	replicaof   = flag.String("replicaof", "", "role type of server, if host it will be master else slave")
 )
 
 func NewServer() *Server {
@@ -67,6 +67,7 @@ func NewServer() *Server {
 
 func (s *Server) start(address string) error {
 	var err error
+	fmt.Println("address start -> ", address)
 	s.Listener, err = net.Listen("tcp", address)
 	if err != nil {
 		fmt.Sprintf("failed to listen & bind for address %s \r\n", address)
