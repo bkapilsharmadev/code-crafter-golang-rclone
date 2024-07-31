@@ -122,6 +122,7 @@ func main() {
 	if *replicaof != "" {
 		server.Role = "slave"
 		fmt.Println("Started server in slave mode")
+
 	} else {
 		server.Role = "master"
 		fmt.Println("Started server in master mode")
@@ -132,6 +133,10 @@ func main() {
 		os.Exit(1)
 	}
 
+}
+
+func (s *Server) SendHandshake(c net.Conn) {
+	c.Write([]byte("*1\r\n$4\r\nPING\r\n"))
 }
 
 // func handleConn(conn net.Conn) {
