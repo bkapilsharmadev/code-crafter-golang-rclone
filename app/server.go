@@ -109,6 +109,10 @@ func (s *Server) handleConn(c net.Conn) {
 		}
 	}
 
+	if s.Role == "slave" {
+		s.SendHandshake(c)
+	}
+
 }
 
 func main() {
