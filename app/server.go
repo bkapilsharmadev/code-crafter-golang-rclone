@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -14,6 +15,7 @@ import (
 // Server struct to hold server properties
 type Server struct {
 	Role                       string
+	MasterAddress              string
 	ConnectedSlaves            int
 	MasterReplid               string
 	MasterReplOffset           int64
@@ -109,10 +111,6 @@ func (s *Server) handleConn(c net.Conn) {
 		}
 	}
 
-	if s.Role == "slave" {
-		s.SendHandshake(c)
-	}
-
 }
 
 func main() {
@@ -126,7 +124,19 @@ func main() {
 	if *replicaof != "" {
 		server.Role = "slave"
 		fmt.Println("Started server in slave mode")
+		masterAddrPart := strings.Split(*replicaof, " ")
+		if len(masterAddrPart) != 2 {
+			fmt.Println("Invalid replicaof address format. Use <MASTER_HOST> <MASTER_PORT>")
+			os.Exit(1)
+		}
+		server.MasterAddress = masterAddrPart[0] + ":" + masterAddrPart[1]
+		fmt.Printf("starting slave server in replica mode of master : %s\n", *replicaof)
 
+		// initaiate handeshake with master server
+		if err := server.InitiateReplicationHandshake(); err != nil {
+			fmt.Printf("137 Failed to initiate handshake : %s\n", err)
+			os.Exit(1)
+		}
 	} else {
 		server.Role = "master"
 		fmt.Println("Started server in master mode")
@@ -139,8 +149,48 @@ func main() {
 
 }
 
-func (s *Server) SendHandshake(c net.Conn) {
-	c.Write([]byte("*1\r\n$4\r\nPING\r\n"))
+// send command to master server and returns the response
+func (s *Server) SendCommandToMaster(command []string) (string, error) {
+	conn, err := net.Dial("tcp", s.MasterAddress)
+	if err != nil {
+		return "", fmt.Errorf("failed to connect to master %w", err)
+	}
+	defer conn.Close()
+
+	//use the existing command execution pattern to handle the response
+	commandString := fmt.Sprintf("*%d\r\n", len(command))
+	for _, arg := range command {
+		commandString += fmt.Sprintf("$%d\r\n%s\r\n", len(arg), arg)
+	}
+
+	_, err = conn.Write([]byte(commandString))
+	if err != nil {
+		return "", fmt.Errorf("failed to send command to master -> %w", err)
+	}
+
+	reader := bufio.NewReader(conn)
+	response, err := reader.ReadString('\n')
+	if err != nil {
+		return "", fmt.Errorf("failed to read response from master: %w", err)
+	}
+
+	return strings.TrimSpace(response), nil
+}
+
+// initial replication handshake with the master server
+func (s *Server) InitiateReplicationHandshake() error {
+	pingRes, err := s.SendCommandToMaster([]string{"PING"})
+	if err != nil {
+		return fmt.Errorf("handshake failed : %w", err)
+	}
+
+	// ping response
+	if pingRes != "+PONG" {
+		return fmt.Errorf("handshake failed: expected +PONG, got %s ", pingRes)
+	}
+
+	fmt.Println("Handshake successful: received pong from master")
+	return nil
 }
 
 // func handleConn(conn net.Conn) {

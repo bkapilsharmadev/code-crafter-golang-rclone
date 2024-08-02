@@ -219,3 +219,38 @@ func InfoCommand(s *Server, c net.Conn, args []string) string {
 
 	return fmt.Sprintf("$%d\r\n%s\r\n", len(replicationInfo), replicationInfo)
 }
+
+// REplica of Command handles replica of command
+func ReplicaOfCommand(s *Server, c net.Conn, args []string) string {
+	if len(args) != 2 {
+		return "-ERR wrong number of arguments for 'REPLICAOF' command\r\n"
+	}
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if strings.ToUpper(args[0]) == "NO" && strings.ToUpper(args[1]) == "ONE" {
+		// Switch to master
+		s.Role = "master"
+		s.MasterAddress = "" // Clear master address
+		s.ConnectedSlaves = 0
+		s.MasterReplid = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
+		s.MasterReplOffset = 0
+		s.ReplBacklogActive = 0
+		s.ReplBacklogSize = 1048576
+		s.ReplBacklogFirstByteOffset = 0
+		s.ReplBacklogHistlen = 0
+		return "+OK\r\n"
+	}
+
+	// Switch to slave
+	s.Role = "slave"
+	s.MasterAddress = args[0] + ":" + args[1]
+
+	// Initiate handshake with the master server
+	if err := s.InitiateReplicationHandshake(); err != nil {
+		return fmt.Sprintf("-ERR %s\r\n", err)
+	}
+
+	return "+OK\r\n"
+}
